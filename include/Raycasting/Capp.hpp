@@ -25,7 +25,8 @@ class Capp
     unsigned int m_screenWidth;
     unsigned int m_screenHeight;
     bool m_isRunning;
-    unsigned long long m_previousTick;
+
+    std::chrono::high_resolution_clock::time_point m_previousTimePoint;
     
     MapManager m_mapManager;
     Player m_player;
@@ -34,6 +35,6 @@ class Capp
     double m_vSide;
     double m_angularSpeed;
 
-    const unsigned int DELTA_TIME_MILLISECONDS = 20;
+    //const unsigned int DELTA_TIME_MILLISECONDS = 5;
     const unsigned char MINIMAP_SCALE_FACTOR = 4;
 };

@@ -37,8 +37,8 @@ void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
 
 void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, unsigned int fov)
 {
-    const double angleStep = (double)fov * oneDegreeInRadian / m_numberOfRays;
-    double currentAngle = player.getAngle() - (double)fov * oneDegreeInRadian * 0.5; 
+    const double angleStep = (double)fov * DEGREE_TO_RADIAN / m_numberOfRays;
+    double currentAngle = player.getAngle() - (double)fov * DEGREE_TO_RADIAN * 0.5; 
     const double renderDistance = 128;
     bool isNextRayDistanceFound = false;
     for (unsigned int i = 0; i < m_numberOfRays; i++)
@@ -98,7 +98,7 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
 
                 m_raysX[i] = rayPositionX;
                 m_raysY[i] = rayPositionY;
-                m_raysDistance[i] = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY);
+                m_raysDistance[i] = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY) * cos(currentAngle - player.getAngle());
             }
         }
 

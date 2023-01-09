@@ -1,5 +1,5 @@
 #pragma once
 
-#include <cmath>
+#include "SDL.h"
 
-const double oneDegreeInRadian = M_PI / 180.0;
+const double DEGREE_TO_RADIAN = M_PI / 180.0;

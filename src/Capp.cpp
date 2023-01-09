@@ -7,15 +7,15 @@ Capp::Capp()
 {
     m_window = nullptr;
     m_renderer = nullptr;
-    m_screenWidth = 800;
-    m_screenHeight = 600;
+    m_screenWidth = 1280;
+    m_screenHeight = 720;
 
     m_vForward = 0;
     m_vSide = 0;
 
-    m_player.initialisePlayer(m_mapManager);
+    m_previousTimePoint = std::chrono::high_resolution_clock::now();
 
-    // Test
+    m_player.initialisePlayer(m_mapManager);
     m_raycaster.initialiseRaycaster(m_screenWidth);
 }
 
@@ -48,11 +48,8 @@ bool Capp::initialise()
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0)
         return false;
 
-    // Initialise timer
-    m_previousTick = SDL_GetTicks64();
-
     // Initialise Window
-    m_window = SDL_CreateWindow("Raycasting", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_SHOWN);
+    m_window = SDL_CreateWindow("Raycasting", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_screenWidth, m_screenHeight, SDL_WINDOW_SHOWN);
     if (m_window == nullptr)
         return false;
 
@@ -137,18 +134,20 @@ void Capp::input()
 
 void Capp::update()
 {
-    unsigned long long currentTick = SDL_GetTicks64();
-    unsigned long long elapsedTime = currentTick - m_previousTick;
+    // Calculate elapsed time
+    auto currentTimePoint = std::chrono::high_resolution_clock::now();
+    unsigned long long elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTimePoint - m_previousTimePoint).count();
+    m_previousTimePoint = currentTimePoint;
     
-    if (elapsedTime > DELTA_TIME_MILLISECONDS)
-    {
-        m_player.movePlayer(m_mapManager, m_vForward, m_vSide, 1e-3 * DELTA_TIME_MILLISECONDS);
-        m_player.rotatePlayer(m_angularSpeed, 1e-3 * DELTA_TIME_MILLISECONDS);
+    // Print FPS
+    std::cout << 1e6/elapsedTime << '\n';
+    
+    // Player actions
+    m_player.movePlayer(m_mapManager, m_vForward, m_vSide, 1e-6 * elapsedTime);
+    m_player.rotatePlayer(m_angularSpeed, 1e-6 * elapsedTime);
 
-        m_raycaster.calculateRaysDistance(m_player, m_mapManager);
-
-        m_previousTick = currentTick;
-    }
+    // Player vision
+    m_raycaster.calculateRaysDistance(m_player, m_mapManager);
 }
 
 void Capp::render()
@@ -157,8 +156,7 @@ void Capp::render()
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderClear(m_renderer);
 
-
-    // Render map
+    // Render map (2D)
     // m_mapManager.SDL_renderMap(m_renderer, m_screenWidth, m_screenHeight);
     // m_player.SDL_renderPlayer(m_renderer, m_mapManager, m_screenWidth, m_screenHeight);
     // m_raycaster.SDL_renderRaycast2DMap(m_renderer, m_mapManager, m_player, m_screenWidth, m_screenHeight);

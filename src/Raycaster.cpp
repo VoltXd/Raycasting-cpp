@@ -143,8 +143,9 @@ void Raycaster::SDL_renderRaycast2DMap(SDL_Renderer *renderer, MapManager &mapMa
 
 void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &mapManager, Player &player, const unsigned int screenWidth, const unsigned int screenHeigth, const unsigned int scaleFactor)
 {
-    int x1 = player.getX() * screenWidth / mapManager.getWidth() / scaleFactor;
-    int y1 = player.getY() * screenHeigth / mapManager.getHeight() / scaleFactor;
+    int rayScreenSize = std::min<unsigned int>(screenWidth, screenHeigth) / std::max<unsigned int>(mapManager.getWidth(), mapManager.getHeight()) / scaleFactor;
+    int x1 = player.getX() * rayScreenSize;
+    int y1 = player.getY() * rayScreenSize;
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 64);
 
@@ -159,8 +160,8 @@ void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &m
         }
         else
         {
-            x2 = m_raysX[i] * screenWidth / mapManager.getWidth() / scaleFactor;
-            y2 = m_raysY[i] * screenHeigth / mapManager.getHeight() / scaleFactor;
+            x2 = m_raysX[i] * rayScreenSize;
+            y2 = m_raysY[i] * rayScreenSize;
         }
 
         SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
@@ -169,6 +170,7 @@ void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &m
 
 void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth)
 {
+    // TODO: Thalès
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     const double heigth = 100;
     double xStep = screenWidth / m_numberOfRays;

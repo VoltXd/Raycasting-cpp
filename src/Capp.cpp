@@ -53,14 +53,10 @@ bool Capp::initialise()
     if (m_window == nullptr)
         return false;
 
-    std::cout << m_window << '\n';
-
     // Initialise Renderer
-    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_SOFTWARE);
+    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
     if (m_renderer == nullptr)
         return false;
-
-    std::cout << m_renderer << '\n';
 
     SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
         
@@ -140,7 +136,7 @@ void Capp::update()
     m_previousTimePoint = currentTimePoint;
     
     // Print FPS
-    std::cout << 1e6/elapsedTime << '\n';
+    std::cout << "FPS: " << 1e6 / elapsedTime << '\r';
     
     // Player actions
     m_player.movePlayer(m_mapManager, m_vForward, m_vSide, 1e-6 * elapsedTime);

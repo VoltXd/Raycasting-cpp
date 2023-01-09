@@ -84,20 +84,21 @@ int Player::SDL_renderPlayer(SDL_Renderer *renderer, MapManager &mapManager, con
 int Player::SDL_renderPlayerMiniMap(SDL_Renderer *renderer, MapManager &mapManager, const unsigned int screenWidth, const unsigned int screenHeight, unsigned char scaleFactor)
 {
     // Render Player
-    int w = 0.25 * screenWidth / mapManager.getWidth() / scaleFactor;
-    int h = 0.25 * screenHeight / mapManager.getHeight() / scaleFactor;
-    int x = (int)((m_xPosition - 0.125) * screenWidth / mapManager.getWidth()) / scaleFactor;
-    int y = (int)((m_yPosition - 0.125) * screenHeight / mapManager.getHeight()) / scaleFactor;
+    int playerSize = std::min<unsigned int>(screenWidth, screenHeight) / std::max<unsigned int>(mapManager.getWidth(), mapManager.getHeight()) / scaleFactor;
+    int w = 0.25 * playerSize;
+    int h = 0.25 * playerSize;
+    int x = (m_xPosition - 0.125) *  playerSize;
+    int y = (m_yPosition - 0.125) *  playerSize;
     SDL_Rect playerRect = { x, y, w, h };
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 128);
     SDL_RenderFillRect(renderer, &playerRect);
 
     // Render Player viewing direction
-    int xViewLine = (int)(m_xPosition * screenWidth / mapManager.getWidth()) / scaleFactor;
-    int yViewLine = (int)(m_yPosition * screenHeight / mapManager.getHeight()) / scaleFactor;
-    int xViewLineEnd = (int)((m_xPosition + cos(m_angle)) * screenWidth / mapManager.getWidth()) / scaleFactor;
-    int yViewLineEnd = (int)((m_yPosition - sin(m_angle)) * screenHeight / mapManager.getHeight()) / scaleFactor;
+    int xViewLine = m_xPosition * playerSize;
+    int yViewLine = m_yPosition * playerSize;
+    int xViewLineEnd = (m_xPosition + cos(m_angle)) * playerSize;
+    int yViewLineEnd = (m_yPosition - sin(m_angle)) * playerSize;
     
     SDL_SetRenderDrawColor(renderer, 255, 255, 0, 64);
     SDL_RenderDrawLine(renderer, xViewLine, yViewLine, xViewLineEnd, yViewLineEnd);

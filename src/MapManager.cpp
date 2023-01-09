@@ -75,7 +75,8 @@ int MapManager::SDL_renderMap(SDL_Renderer *renderer, const unsigned int screenW
 
 int MapManager::SDL_renderMiniMap(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeight, unsigned char scaleFactor)
 {
-    SDL_Rect tile = { 0, 0, (int)(1 + (double)screenWidth / m_width / scaleFactor) , (int)(1 + (double)screenHeight / m_height / scaleFactor) };
+    int miniMapSize = std::min<unsigned int>(screenWidth, screenHeight) / std::max<unsigned int>(m_width, m_height) / scaleFactor; 
+    SDL_Rect tile = { 0, 0, miniMapSize , miniMapSize };
     for (unsigned int i = 0; i < m_width; i++)
     {
         for (unsigned int j = 0; j < m_height; j++)
@@ -85,11 +86,11 @@ int MapManager::SDL_renderMiniMap(SDL_Renderer *renderer, const unsigned int scr
             else if (m_mapArray[coordinateToIndex(i, j)] == 0)
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);
 
-            tile.x = (int)(i * screenWidth / m_width / scaleFactor);
-            tile.y = (int)(j * screenHeight / m_height / scaleFactor);
-
             SDL_RenderFillRect(renderer, &tile);
+            tile.y += miniMapSize;
         }
+        tile.x += miniMapSize;
+        tile.y = 0;
     }
 
     return 0;

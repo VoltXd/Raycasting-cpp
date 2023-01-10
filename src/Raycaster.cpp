@@ -222,8 +222,7 @@ void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &m
 
 void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth)
 {
-    // TODO: Thalès
-    const double heigth = 100;
+    const double heigth = 2 * 0.4* screenHeigth;
     double xStep = screenWidth / m_numberOfRays;
     int x = (m_numberOfRays - 1) * xStep;
     

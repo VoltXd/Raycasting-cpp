@@ -12,6 +12,7 @@ Capp::Capp()
 
     m_vForward = 0;
     m_vSide = 0;
+    m_mouseMoved = false;
 
     m_previousTimePoint = std::chrono::high_resolution_clock::now();
 
@@ -58,7 +59,13 @@ bool Capp::initialise()
     if (m_renderer == nullptr)
         return false;
 
-    SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
+    // Initialise blend mode
+    if (SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND) != 0)
+        return false;
+
+    // Initialise relative mouse mode
+    if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0)
+        return false;
         
     return true;
 }
@@ -124,6 +131,14 @@ void Capp::input()
                         m_angularSpeed = 0;   
                 }
                 break;
+
+            case SDL_MOUSEMOTION:
+                m_mouseMoved = true;
+                m_angularSpeed = -events.motion.xrel;
+                break;
+
+            default:
+                break;
         }
     }
 }
@@ -144,6 +159,13 @@ void Capp::update()
 
     // Player vision
     m_raycaster.calculateRaysDistance(m_player, m_mapManager);
+
+    // Reset rotation if mouse moved
+    if (m_mouseMoved)
+    {
+        m_mouseMoved = false;
+        m_angularSpeed = 0;
+    }
 }
 
 void Capp::render()
@@ -165,9 +187,8 @@ void Capp::render()
 
     // Render Minimap
     m_mapManager.SDL_renderMiniMap(m_renderer, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);
-    m_player.SDL_renderPlayerMiniMap(m_renderer, m_mapManager, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);
     m_raycaster.SDL_renderRaycast2DMiniMap(m_renderer, m_mapManager, m_player, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);
-
+    m_player.SDL_renderPlayerMiniMap(m_renderer, m_mapManager, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);
 
     // Render
     SDL_RenderPresent(m_renderer);

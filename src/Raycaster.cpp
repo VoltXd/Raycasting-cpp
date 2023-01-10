@@ -13,6 +13,9 @@ Raycaster::Raycaster()
     m_raysDistance = nullptr;
     m_raysX = nullptr;
     m_raysY = nullptr;
+    m_raysColorR = nullptr;
+    m_raysColorG = nullptr;
+    m_raysColorB = nullptr;
 }
 
 Raycaster::~Raycaster()
@@ -25,6 +28,15 @@ Raycaster::~Raycaster()
         
     if (m_raysY != nullptr)
         delete[] m_raysY;
+
+    if (m_raysColorR != nullptr)
+        delete[] m_raysColorR;
+
+    if (m_raysColorG != nullptr)
+        delete[] m_raysColorG;
+
+    if (m_raysColorB != nullptr)
+        delete[] m_raysColorB;
 }
 
 void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
@@ -33,6 +45,9 @@ void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
     m_raysDistance = new double[m_numberOfRays];
     m_raysX = new double[m_numberOfRays];
     m_raysY = new double[m_numberOfRays];
+    m_raysColorR = new char[m_numberOfRays];
+    m_raysColorG = new char[m_numberOfRays];
+    m_raysColorB = new char[m_numberOfRays];
 }
 
 void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, unsigned int fov)
@@ -90,7 +105,8 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
             rayPositionY += 1e-6 * rayDirectionY;
 
             // Check if the next block is a wall
-            if (mapManager.getMapElement((unsigned int)rayPositionX, (unsigned int)rayPositionY) == 1)
+            char blockHitIndex = mapManager.getMapElement((unsigned int)rayPositionX, (unsigned int)rayPositionY); 
+            if (blockHitIndex != 0)
             {
                 isNextRayDistanceFound = true;
                 double playerToRayX = rayPositionX - player.getX();
@@ -99,6 +115,42 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
                 m_raysX[i] = rayPositionX;
                 m_raysY[i] = rayPositionY;
                 m_raysDistance[i] = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY) * cos(currentAngle - player.getAngle());
+
+                if (blockHitIndex == 1)
+                {
+                    // White block
+                    m_raysColorR[i] = 255;
+                    m_raysColorG[i] = 255;
+                    m_raysColorB[i] = 255;
+                }
+                else if (blockHitIndex == 2)
+                {
+                    // Red block
+                    m_raysColorR[i] = 255;
+                    m_raysColorG[i] = 0;
+                    m_raysColorB[i] = 0;
+                }
+                else if (blockHitIndex == 3)
+                {
+                    // Red block
+                    m_raysColorR[i] = 0;
+                    m_raysColorG[i] = 255;
+                    m_raysColorB[i] = 0;
+                }
+                else if (blockHitIndex == 4)
+                {
+                    // Red block
+                    m_raysColorR[i] = 0;
+                    m_raysColorG[i] = 0;
+                    m_raysColorB[i] = 255;
+                }
+                else 
+                {
+                    // DEFAULT BLACK BLOCK
+                    m_raysColorR[i] = 0;
+                    m_raysColorG[i] = 0;
+                    m_raysColorB[i] = 0;
+                }
             }
         }
 
@@ -171,13 +223,13 @@ void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &m
 void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth)
 {
     // TODO: Thalès
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     const double heigth = 100;
     double xStep = screenWidth / m_numberOfRays;
     int x = (m_numberOfRays - 1) * xStep;
     
     for(unsigned int i = 0; i < m_numberOfRays; i++)
     {
+        SDL_SetRenderDrawColor(renderer, m_raysColorR[i], m_raysColorG[i], m_raysColorB[i], 255);
         int y = screenHeigth / 2 - heigth / m_raysDistance[i];
         int h = 2 * heigth / m_raysDistance[i];
         SDL_Rect rectangle = { x, y, (int)xStep, h };

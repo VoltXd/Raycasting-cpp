@@ -27,7 +27,7 @@ void Player::initialisePlayer(MapManager &mapManager)
     {
         xStart = distributionX(generator);
         yStart = distributionY(generator);
-    } while (mapManager.getMapElement(xStart, yStart) == 1);
+    } while (mapManager.getMapElement(xStart, yStart) != 0);
 
     m_xPosition = xStart + 0.5;
     m_yPosition = yStart + 0.5;
@@ -46,11 +46,11 @@ void Player::movePlayer(MapManager &mapManager, double vForward, double vSide, d
 
     // Wall collide management
     if ((int)nextX != (int)m_xPosition)
-        if (mapManager.getMapElement((unsigned int)nextX, (unsigned int)m_yPosition) == 1)
-            nextX = (nextX -  m_xPosition > 0) ? (int)nextX - 0.001: (int)m_xPosition;
+        if (mapManager.getMapElement((unsigned int)nextX, (unsigned int)m_yPosition) != 0)
+            nextX = (nextX -  m_xPosition > 0) ? (int)nextX - 0.001 : (int)m_xPosition;
         
     if ((int)nextY != (int)m_yPosition)
-        if (mapManager.getMapElement((unsigned int)m_yPosition, (unsigned int)nextY) == 1)
+        if (mapManager.getMapElement((unsigned int)m_xPosition, (unsigned int)nextY) != 0)
             nextY = (nextY -  m_yPosition > 0) ? (int)nextY - 0.001 : (int)m_yPosition;
 
     m_xPosition = nextX;

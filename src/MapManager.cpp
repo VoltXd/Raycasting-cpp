@@ -16,11 +16,14 @@ MapManager::MapManager()
     for(unsigned int i = 0; i < DEFAULT_SIZE; i++)
     {
         m_mapArray[coordinateToIndex(i, 0)] = 1;
-        m_mapArray[coordinateToIndex(0, i)] = 1;
-        m_mapArray[coordinateToIndex(i, DEFAULT_SIZE-1)] = 1;
-        m_mapArray[coordinateToIndex(DEFAULT_SIZE-1, i)] = 1;
+        m_mapArray[coordinateToIndex(0, i)] = 2;
+        m_mapArray[coordinateToIndex(i, DEFAULT_SIZE-1)] = 3;
+        m_mapArray[coordinateToIndex(DEFAULT_SIZE-1, i)] = 4;
     }
     
+    m_mapArray[coordinateToIndex(4, 3)] = 3;
+    m_mapArray[coordinateToIndex(4, 5)] = 3;
+    m_mapArray[coordinateToIndex(4, 7)] = 3;
 }
 
 MapManager::MapManager(const unsigned int width, const unsigned int height)
@@ -58,10 +61,19 @@ int MapManager::SDL_renderMap(SDL_Renderer *renderer, const unsigned int screenW
     {
         for (unsigned int j = 0; j < m_height; j++)
         {
-            if (m_mapArray[coordinateToIndex(i, j)] == 1)
-                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-            else if (m_mapArray[coordinateToIndex(i, j)] == 0)
+            if (m_mapArray[coordinateToIndex(i, j)] == 0)
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 1)
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 2)
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 3)
+                SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 4)
+                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+            else
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            
 
             tile.x = (int)(i * screenWidth / m_width);
             tile.y = (int)(j * screenHeight / m_height);
@@ -81,10 +93,16 @@ int MapManager::SDL_renderMiniMap(SDL_Renderer *renderer, const unsigned int scr
     {
         for (unsigned int j = 0; j < m_height; j++)
         {
-            if (m_mapArray[coordinateToIndex(i, j)] == 1)
-                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 128);
-            else if (m_mapArray[coordinateToIndex(i, j)] == 0)
+            if (m_mapArray[coordinateToIndex(i, j)] == 0)
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 1)
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 128);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 2)
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 128);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 3)
+                SDL_SetRenderDrawColor(renderer, 0, 255, 0, 128);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 4)
+                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 128);
 
             SDL_RenderFillRect(renderer, &tile);
             tile.y += miniMapSize;

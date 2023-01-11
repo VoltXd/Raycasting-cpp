@@ -24,5 +24,5 @@ class MapManager
     unsigned int m_width;
     unsigned int m_height;
 
-    const unsigned int DEFAULT_SIZE = 16;
+    const unsigned int DEFAULT_SIZE = 32;
 };

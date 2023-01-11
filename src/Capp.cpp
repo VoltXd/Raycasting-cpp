@@ -3,6 +3,8 @@
 #include "Capp.hpp"
 #include "SDL.h"
 
+// TODO: config.cfg
+
 Capp::Capp()
 {
     m_window = nullptr;
@@ -171,7 +173,7 @@ void Capp::update()
 void Capp::render()
 {
     // Clear renderer
-    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(m_renderer, 70, 70, 70, 255);
     SDL_RenderClear(m_renderer);
 
     // Render map (2D)

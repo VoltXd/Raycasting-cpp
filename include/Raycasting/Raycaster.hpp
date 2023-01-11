@@ -23,7 +23,7 @@ class Raycaster
     double *m_raysDistance;
     double *m_raysX;
     double *m_raysY;
-    char *m_raysColorR;
-    char *m_raysColorG;
-    char *m_raysColorB;
+    unsigned char *m_raysColorR;
+    unsigned char *m_raysColorG;
+    unsigned char *m_raysColorB;
 };

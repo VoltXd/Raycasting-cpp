@@ -12,7 +12,7 @@ void Player::initialisePlayer(MapManager &mapManager)
 {
     m_angle = 0;
     m_moveSpeed = 4;
-    m_rotationSpeed = 180.0 * DEGREE_TO_RADIAN;
+    m_rotationSpeed = 180.0 * Math::DEGREE_TO_RADIAN;
 
     auto timePoint = std::chrono::high_resolution_clock::now();
     unsigned long long seed = timePoint.time_since_epoch().count();

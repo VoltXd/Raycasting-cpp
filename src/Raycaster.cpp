@@ -45,15 +45,15 @@ void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
     m_raysDistance = new double[m_numberOfRays];
     m_raysX = new double[m_numberOfRays];
     m_raysY = new double[m_numberOfRays];
-    m_raysColorR = new char[m_numberOfRays];
-    m_raysColorG = new char[m_numberOfRays];
-    m_raysColorB = new char[m_numberOfRays];
+    m_raysColorR = new unsigned char[m_numberOfRays];
+    m_raysColorG = new unsigned char[m_numberOfRays];
+    m_raysColorB = new unsigned char[m_numberOfRays];
 }
 
 void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, unsigned int fov)
 {
-    const double angleStep = (double)fov * DEGREE_TO_RADIAN / m_numberOfRays;
-    double currentAngle = player.getAngle() - (double)fov * DEGREE_TO_RADIAN * 0.5; 
+    const double angleStep = (double)fov * Math::DEGREE_TO_RADIAN / m_numberOfRays;
+    double currentAngle = player.getAngle() - (double)fov * Math::DEGREE_TO_RADIAN * 0.5; 
     const double renderDistance = 128;
     bool isNextRayDistanceFound = false;
     for (unsigned int i = 0; i < m_numberOfRays; i++)
@@ -114,7 +114,9 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
 
                 m_raysX[i] = rayPositionX;
                 m_raysY[i] = rayPositionY;
-                m_raysDistance[i] = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY) * cos(currentAngle - player.getAngle());
+
+                double rayDistanceUncorrected = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY); 
+                m_raysDistance[i] = rayDistanceUncorrected * cos(currentAngle - player.getAngle());
 
                 if (blockHitIndex == 1)
                 {
@@ -151,6 +153,12 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
                     m_raysColorG[i] = 0;
                     m_raysColorB[i] = 0;
                 }
+
+                double lightFactor = Math::limitToInterval(1 - (rayDistanceUncorrected * 0.01), 0, 1);
+
+                m_raysColorR[i] *= lightFactor;
+                m_raysColorG[i] *= lightFactor;
+                m_raysColorB[i] *= lightFactor;
             }
         }
 
@@ -222,7 +230,7 @@ void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &m
 
 void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth)
 {
-    const double heigth = 2 * 0.4* screenHeigth;
+    const double heigth = 1 * 0.5* screenHeigth;
     double xStep = screenWidth / m_numberOfRays;
     int x = (m_numberOfRays - 1) * xStep;
     

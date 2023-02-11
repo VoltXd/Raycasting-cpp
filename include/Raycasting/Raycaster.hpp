@@ -16,6 +16,7 @@ class Raycaster
     void SDL_renderRaycast2DMap(SDL_Renderer *renderer, MapManager &mapManager, Player &player, const unsigned int screenWidth, const unsigned int screenHeigth);
     void SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &mapManager, Player &player, const unsigned int screenWidth, const unsigned int screenHeigth, const unsigned int scaleFactor);
     void SDL_renderRaycast(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth);
+    void SDL_renderRaycastBackground(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth);
     
 
     private:

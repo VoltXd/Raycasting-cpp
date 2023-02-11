@@ -57,8 +57,6 @@ bool Capp::initialise()
         m_windowFlags = SDL_WINDOW_FULLSCREEN;
         m_screenWidth = displayMode.w;
         m_screenHeight = displayMode.h;
-        std::cout << m_screenWidth << '\n';
-        std::cout << m_screenHeight << '\n';
     }
 
     // Initialise Raycasting
@@ -199,6 +197,7 @@ void Capp::render()
     // Render sky & ground (TODO)
 
     // Render walls
+    m_raycaster.SDL_renderRaycastBackground(m_renderer, m_screenWidth, m_screenHeight);
     m_raycaster.SDL_renderRaycast(m_renderer, m_screenWidth, m_screenHeight);
 
     // Render Minimap

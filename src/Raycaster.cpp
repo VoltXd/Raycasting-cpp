@@ -249,3 +249,18 @@ void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const unsigned int scr
         x -= xStep;
     }
 }
+
+void Raycaster::SDL_renderRaycastBackground(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth)
+{
+    const double maxBrightness = 45;
+    double brightness = maxBrightness; 
+    int j = screenHeigth - 1;
+    for (unsigned int i = 0; i < screenHeigth/2; i++)
+    {
+        SDL_SetRenderDrawColor(renderer, brightness, brightness, brightness, 255);
+        SDL_RenderDrawLine(renderer, 0, i, screenWidth - 1, i);
+        SDL_RenderDrawLine(renderer, 0, j, screenWidth - 1, j);
+        brightness -= maxBrightness / screenHeigth;  
+        j--;
+    }
+}

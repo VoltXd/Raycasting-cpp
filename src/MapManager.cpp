@@ -24,6 +24,15 @@ MapManager::MapManager()
     m_mapArray[coordinateToIndex(4, 3)] = 3;
     m_mapArray[coordinateToIndex(4, 5)] = 3;
     m_mapArray[coordinateToIndex(4, 7)] = 3;
+
+    m_mapArray[coordinateToIndex(20, 10)] = 2;
+    m_mapArray[coordinateToIndex(20, 11)] = 2;
+    m_mapArray[coordinateToIndex(20, 12)] = 2;
+    m_mapArray[coordinateToIndex(21, 12)] = 2;
+    m_mapArray[coordinateToIndex(22, 12)] = 2;
+    m_mapArray[coordinateToIndex(22, 11)] = 2;
+    m_mapArray[coordinateToIndex(22, 10)] = 2;
+
 }
 
 MapManager::MapManager(const unsigned int width, const unsigned int height)

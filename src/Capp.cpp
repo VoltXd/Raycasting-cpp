@@ -35,6 +35,7 @@ bool Capp::run()
         update();
         render();
     }
+    std::cout << '\n';
     
     // Destroy components
     SDL_DestroyRenderer(m_renderer);
@@ -172,7 +173,7 @@ void Capp::update()
     m_player.rotatePlayer(m_angularSpeed, 1e-6 * elapsedTime);
 
     // Player vision
-    m_raycaster.calculateRaysDistance(m_player, m_mapManager);
+    m_raycaster.calculateRaysDistance_OMP(m_player, m_mapManager);
 
     // Reset rotation if mouse moved
     if (m_mouseMoved)

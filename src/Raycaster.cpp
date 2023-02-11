@@ -1,6 +1,7 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
+#include <omp.h>
 
 #include "Raycaster.hpp"
 #include "SDL.h"
@@ -17,6 +18,7 @@ Raycaster::Raycaster()
     m_raysColorG = nullptr;
     m_raysColorB = nullptr;
     m_raysLightFactor = nullptr;
+    m_raysAngle = nullptr;
 }
 
 Raycaster::~Raycaster()
@@ -41,6 +43,9 @@ Raycaster::~Raycaster()
 
     if (m_raysLightFactor != nullptr)
         delete[] m_raysLightFactor;
+
+    if (m_raysAngle != nullptr)
+        delete[] m_raysAngle;
 }
 
 void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
@@ -53,34 +58,65 @@ void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
     m_raysColorG = new unsigned char[m_numberOfRays];
     m_raysColorB = new unsigned char[m_numberOfRays];
     m_raysLightFactor = new double[m_numberOfRays];
+    m_raysAngle = new double[m_numberOfRays];
 }
 
 void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, unsigned int fov)
 {
     const double angleStep = (double)fov * Math::DEGREE_TO_RADIAN / m_numberOfRays;
-    double currentAngle = player.getAngle() - (double)fov * Math::DEGREE_TO_RADIAN * 0.5; 
     const double renderDistance = 128;
+
+    // Compute angle array
+    m_raysAngle[0] = player.getAngle() - (double)fov * Math::DEGREE_TO_RADIAN * 0.5; 
+    for (unsigned int i = 1; i < m_numberOfRays; i++)
+        m_raysAngle[i] = m_raysAngle[i - 1] + angleStep; 
+    
+    double currentAngle;
     bool isNextRayDistanceFound = false;
+    
+    double rayPositionX; 
+    double rayPositionY;
+    double rayDirectionX;  
+    double rayDirectionY;
+
+    int nextEdgeXaxis;
+    int nextEdgeYaxis;
+
+    double currentPointToNextXaxisEdge_X;
+    double currentPointToNextXaxisEdge_Y;
+    double currentPointToNextYaxisEdge_Y;
+    double currentPointToNextYaxisEdge_X;
+
+    char blockHitIndex;
+
+    double playerToRayX;
+    double playerToRayY;
+
+    double rayDistanceUncorrected;
+
     for (unsigned int i = 0; i < m_numberOfRays; i++)
     {
+        // Get current angle
+        currentAngle = m_raysAngle[i];
+        
         // Find ray distance
-        double rayPositionX = player.getX();
-        double rayPositionY = player.getY();   
-        double rayDirectionX = cos(currentAngle);
-        double rayDirectionY = -sin(currentAngle);
+        rayPositionX = player.getX();
+        rayPositionY = player.getY();   
+        rayDirectionX = cos(currentAngle);
+        rayDirectionY = -sin(currentAngle);
 
         // Calculate next edges (for X & Y axis)
-        int nextEdgeXaxis = (rayDirectionX > 0) ? 1 + (int)rayPositionX : (int)rayPositionX;
-        int nextEdgeYaxis = (rayDirectionY > 0) ? 1 + (int)rayPositionY : (int)rayPositionY;
+        nextEdgeXaxis = (rayDirectionX > 0) ? 1 + (int)rayPositionX : (int)rayPositionX;
+        nextEdgeYaxis = (rayDirectionY > 0) ? 1 + (int)rayPositionY : (int)rayPositionY;
 
         for (int j = 0; j < renderDistance && !isNextRayDistanceFound; j++)
         {
             // Find the closest edge
             // 1st. Calculate point to axis vector
-            double currentPointToNextXaxisEdge_X = nextEdgeXaxis - rayPositionX;
-            double currentPointToNextXaxisEdge_Y = currentPointToNextXaxisEdge_X * rayDirectionY / rayDirectionX;
-            double currentPointToNextYaxisEdge_Y = nextEdgeYaxis - rayPositionY;
-            double currentPointToNextYaxisEdge_X = currentPointToNextYaxisEdge_Y * rayDirectionX / rayDirectionY;
+            currentPointToNextXaxisEdge_X = nextEdgeXaxis - rayPositionX;
+            currentPointToNextXaxisEdge_Y = currentPointToNextXaxisEdge_X * rayDirectionY / rayDirectionX;
+            currentPointToNextYaxisEdge_Y = nextEdgeYaxis - rayPositionY;
+            currentPointToNextYaxisEdge_X = currentPointToNextYaxisEdge_Y * rayDirectionX / rayDirectionY;
 
             // 2nd. Compare length
             if (currentPointToNextXaxisEdge_X * currentPointToNextXaxisEdge_X + currentPointToNextXaxisEdge_Y * currentPointToNextXaxisEdge_Y < currentPointToNextYaxisEdge_X * currentPointToNextYaxisEdge_X + currentPointToNextYaxisEdge_Y * currentPointToNextYaxisEdge_Y)
@@ -110,17 +146,173 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
             rayPositionY += 1e-6 * rayDirectionY;
 
             // Check if the next block is a wall
-            char blockHitIndex = mapManager.getMapElement((unsigned int)rayPositionX, (unsigned int)rayPositionY); 
+            blockHitIndex = mapManager.getMapElement((unsigned int)rayPositionX, (unsigned int)rayPositionY); 
             if (blockHitIndex != 0)
             {
                 isNextRayDistanceFound = true;
-                double playerToRayX = rayPositionX - player.getX();
-                double playerToRayY = rayPositionY - player.getY();
+                playerToRayX = rayPositionX - player.getX();
+                playerToRayY = rayPositionY - player.getY();
 
                 m_raysX[i] = rayPositionX;
                 m_raysY[i] = rayPositionY;
 
-                double rayDistanceUncorrected = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY); 
+                rayDistanceUncorrected = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY); 
+                m_raysDistance[i] = rayDistanceUncorrected * cos(currentAngle - player.getAngle());
+
+                if (blockHitIndex == 1)
+                {
+                    // White block
+                    m_raysColorR[i] = 255;
+                    m_raysColorG[i] = 255;
+                    m_raysColorB[i] = 255;
+                }
+                else if (blockHitIndex == 2)
+                {
+                    // Red block
+                    m_raysColorR[i] = 255;
+                    m_raysColorG[i] = 0;
+                    m_raysColorB[i] = 0;
+                }
+                else if (blockHitIndex == 3)
+                {
+                    // Red block
+                    m_raysColorR[i] = 0;
+                    m_raysColorG[i] = 255;
+                    m_raysColorB[i] = 0;
+                }
+                else if (blockHitIndex == 4)
+                {
+                    // Red block
+                    m_raysColorR[i] = 0;
+                    m_raysColorG[i] = 0;
+                    m_raysColorB[i] = 255;
+                }
+                else 
+                {
+                    // DEFAULT BLACK BLOCK
+                    m_raysColorR[i] = 0;
+                    m_raysColorG[i] = 0;
+                    m_raysColorB[i] = 0;
+                }
+
+                m_raysLightFactor[i] = Math::limitToInterval(1 - (rayDistanceUncorrected * 0.01), 0, 1);
+
+                m_raysColorR[i] *= m_raysLightFactor[i];
+                m_raysColorG[i] *= m_raysLightFactor[i];
+                m_raysColorB[i] *= m_raysLightFactor[i];
+            }
+        }
+
+        if (!isNextRayDistanceFound)
+        {
+            m_raysDistance[i] = std::numeric_limits<double>::infinity();
+            m_raysX[i] = std::numeric_limits<double>::infinity();
+            m_raysY[i] = std::numeric_limits<double>::infinity();            
+        }
+
+        // Setup next Ray
+        currentAngle += angleStep;
+        isNextRayDistanceFound = false;
+    }
+}
+
+void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager, unsigned int fov)
+{
+    const double angleStep = (double)fov * Math::DEGREE_TO_RADIAN / m_numberOfRays;
+    const double renderDistance = 128;
+
+    // Compute angle array
+    m_raysAngle[0] = player.getAngle() - (double)fov * Math::DEGREE_TO_RADIAN * 0.5; 
+    for (unsigned int i = 1; i < m_numberOfRays; i++)
+        m_raysAngle[i] = m_raysAngle[i - 1] + angleStep; 
+    
+    double currentAngle;
+    bool isNextRayDistanceFound = false;
+    
+    double rayPositionX; 
+    double rayPositionY;
+    double rayDirectionX;  
+    double rayDirectionY;
+
+    int nextEdgeXaxis;
+    int nextEdgeYaxis;
+
+    double currentPointToNextXaxisEdge_X;
+    double currentPointToNextXaxisEdge_Y;
+    double currentPointToNextYaxisEdge_Y;
+    double currentPointToNextYaxisEdge_X;
+
+    char blockHitIndex;
+
+    double playerToRayX;
+    double playerToRayY;
+
+    double rayDistanceUncorrected;
+
+#pragma omp parallel for firstprivate(isNextRayDistanceFound) private(currentAngle, rayPositionX, rayPositionY, rayDirectionX, rayDirectionY, nextEdgeXaxis, nextEdgeYaxis, currentPointToNextXaxisEdge_X, currentPointToNextXaxisEdge_Y, currentPointToNextYaxisEdge_Y, currentPointToNextYaxisEdge_X, blockHitIndex, playerToRayX, playerToRayY, rayDistanceUncorrected)
+    for (unsigned int i = 0; i < m_numberOfRays; i++)
+    {
+        // Get current angle
+        currentAngle = m_raysAngle[i];
+
+        // Find ray distance
+        rayPositionX = player.getX();
+        rayPositionY = player.getY();   
+        rayDirectionX = cos(currentAngle);
+        rayDirectionY = -sin(currentAngle);
+
+        // Calculate next edges (for X & Y axis)
+        nextEdgeXaxis = (rayDirectionX > 0) ? 1 + (int)rayPositionX : (int)rayPositionX;
+        nextEdgeYaxis = (rayDirectionY > 0) ? 1 + (int)rayPositionY : (int)rayPositionY;
+
+        for (int j = 0; j < renderDistance && !isNextRayDistanceFound; j++)
+        {
+            // Find the closest edge
+            // 1st. Calculate point to axis vector
+            currentPointToNextXaxisEdge_X = nextEdgeXaxis - rayPositionX;
+            currentPointToNextXaxisEdge_Y = currentPointToNextXaxisEdge_X * rayDirectionY / rayDirectionX;
+            currentPointToNextYaxisEdge_Y = nextEdgeYaxis - rayPositionY;
+            currentPointToNextYaxisEdge_X = currentPointToNextYaxisEdge_Y * rayDirectionX / rayDirectionY;
+
+            // 2nd. Compare length
+            if (currentPointToNextXaxisEdge_X * currentPointToNextXaxisEdge_X + currentPointToNextXaxisEdge_Y * currentPointToNextXaxisEdge_Y < currentPointToNextYaxisEdge_X * currentPointToNextYaxisEdge_X + currentPointToNextYaxisEdge_Y * currentPointToNextYaxisEdge_Y)
+            {
+                // X edge is closer
+                rayPositionX += currentPointToNextXaxisEdge_X;
+                rayPositionY += currentPointToNextXaxisEdge_Y;
+
+                if (rayDirectionX > 0)
+                    nextEdgeXaxis++;
+                else
+                    nextEdgeXaxis--;
+            }
+            else
+            {
+                // Y edge is closer
+                rayPositionX += currentPointToNextYaxisEdge_X;
+                rayPositionY += currentPointToNextYaxisEdge_Y;
+
+                if (rayDirectionY > 0)
+                    nextEdgeYaxis++;
+                else
+                    nextEdgeYaxis--;
+            }
+
+            rayPositionX += 1e-6 * rayDirectionX;
+            rayPositionY += 1e-6 * rayDirectionY;
+
+            // Check if the next block is a wall
+            blockHitIndex = mapManager.getMapElement((unsigned int)rayPositionX, (unsigned int)rayPositionY); 
+            if (blockHitIndex != 0)
+            {
+                isNextRayDistanceFound = true;
+                playerToRayX = rayPositionX - player.getX();
+                playerToRayY = rayPositionY - player.getY();
+
+                m_raysX[i] = rayPositionX;
+                m_raysY[i] = rayPositionY;
+
+                rayDistanceUncorrected = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY); 
                 m_raysDistance[i] = rayDistanceUncorrected * cos(currentAngle - player.getAngle());
 
                 if (blockHitIndex == 1)

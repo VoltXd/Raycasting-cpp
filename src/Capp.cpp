@@ -11,7 +11,7 @@ Capp::Capp()
     m_renderer = nullptr;
     m_screenWidth = 1280;
     m_screenHeight = 720;
-
+    m_windowFlags = SDL_WINDOW_SHOWN;
     m_vForward = 0;
     m_vSide = 0;
     m_mouseMoved = false;
@@ -19,7 +19,6 @@ Capp::Capp()
     m_previousTimePoint = std::chrono::high_resolution_clock::now();
 
     m_player.initialisePlayer(m_mapManager);
-    m_raycaster.initialiseRaycaster(m_screenWidth);
 }
 
 bool Capp::run()
@@ -51,8 +50,22 @@ bool Capp::initialise()
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0)
         return false;
 
+    // Set fullscreen
+    SDL_DisplayMode displayMode;
+    if (SDL_GetDesktopDisplayMode(0, &displayMode) == 0)
+    {
+        m_windowFlags = SDL_WINDOW_FULLSCREEN;
+        m_screenWidth = displayMode.w;
+        m_screenHeight = displayMode.h;
+        std::cout << m_screenWidth << '\n';
+        std::cout << m_screenHeight << '\n';
+    }
+
+    // Initialise Raycasting
+    m_raycaster.initialiseRaycaster(m_screenWidth);
+
     // Initialise Window
-    m_window = SDL_CreateWindow("Raycasting", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_screenWidth, m_screenHeight, SDL_WINDOW_SHOWN);
+    m_window = SDL_CreateWindow("Raycasting", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_screenWidth, m_screenHeight, m_windowFlags);
     if (m_window == nullptr)
         return false;
 
@@ -97,7 +110,8 @@ void Capp::input()
                     m_angularSpeed = 1;
                 else if (events.key.keysym.scancode == SDL_SCANCODE_RIGHT)
                     m_angularSpeed = -1;
-                
+                else if (events.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+                    m_isRunning = false;
                 break;
 
             case SDL_KEYUP:

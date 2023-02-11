@@ -16,6 +16,7 @@ Raycaster::Raycaster()
     m_raysColorR = nullptr;
     m_raysColorG = nullptr;
     m_raysColorB = nullptr;
+    m_raysLightFactor = nullptr;
 }
 
 Raycaster::~Raycaster()
@@ -37,6 +38,9 @@ Raycaster::~Raycaster()
 
     if (m_raysColorB != nullptr)
         delete[] m_raysColorB;
+
+    if (m_raysLightFactor != nullptr)
+        delete[] m_raysLightFactor;
 }
 
 void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
@@ -48,6 +52,7 @@ void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
     m_raysColorR = new unsigned char[m_numberOfRays];
     m_raysColorG = new unsigned char[m_numberOfRays];
     m_raysColorB = new unsigned char[m_numberOfRays];
+    m_raysLightFactor = new double[m_numberOfRays];
 }
 
 void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, unsigned int fov)
@@ -154,11 +159,11 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
                     m_raysColorB[i] = 0;
                 }
 
-                double lightFactor = Math::limitToInterval(1 - (rayDistanceUncorrected * 0.01), 0, 1);
+                m_raysLightFactor[i] = Math::limitToInterval(1 - (rayDistanceUncorrected * 0.01), 0, 1);
 
-                m_raysColorR[i] *= lightFactor;
-                m_raysColorG[i] *= lightFactor;
-                m_raysColorB[i] *= lightFactor;
+                m_raysColorR[i] *= m_raysLightFactor[i];
+                m_raysColorG[i] *= m_raysLightFactor[i];
+                m_raysColorB[i] *= m_raysLightFactor[i];
             }
         }
 
@@ -207,7 +212,6 @@ void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &m
     int x1 = player.getX() * rayScreenSize;
     int y1 = player.getY() * rayScreenSize;
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 64);
 
     for (unsigned int i = 0; i < m_numberOfRays; i++)
     {
@@ -224,6 +228,7 @@ void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &m
             y2 = m_raysY[i] * rayScreenSize;
         }
 
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255 * m_raysLightFactor[i], 64 * m_raysLightFactor[i]);
         SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
     }
 }

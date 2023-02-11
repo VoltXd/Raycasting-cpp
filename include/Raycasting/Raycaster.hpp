@@ -26,4 +26,5 @@ class Raycaster
     unsigned char *m_raysColorR;
     unsigned char *m_raysColorG;
     unsigned char *m_raysColorB;
+    double *m_raysLightFactor;
 };

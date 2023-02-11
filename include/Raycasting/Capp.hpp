@@ -24,6 +24,7 @@ class Capp
     SDL_Renderer *m_renderer;
     unsigned int m_screenWidth;
     unsigned int m_screenHeight;
+    Uint32 m_windowFlags;
     bool m_isRunning;
 
     std::chrono::high_resolution_clock::time_point m_previousTimePoint;

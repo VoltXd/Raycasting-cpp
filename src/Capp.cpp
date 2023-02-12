@@ -194,7 +194,7 @@ void Capp::update()
     int textureWidth = 0;
     int textureHeight = 0;
     SDL_QueryTexture(m_FPStextTexture, nullptr, nullptr, &textureWidth, &textureHeight);
-    m_FPStextTextureRect = { (int)m_screenWidth - textureWidth, 0, textureWidth, textureHeight };
+    m_FPStextTextureRect = { 0, (int)m_screenHeight - textureHeight, textureWidth, textureHeight };
     
     // Player actions
     m_player.movePlayer(m_mapManager, m_vForward, m_vSide, 1e-6 * elapsedTime);

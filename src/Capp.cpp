@@ -1,10 +1,13 @@
 #include <iostream>
+#include <string>
 
 #include "Capp.hpp"
 #include "SDL.h"
+#include "SDL_ttf.h"
 #include "Toolbox.hpp"
 
 // TODO: config.cfg
+// TODO: ImGui
 
 Capp::Capp()
 {
@@ -17,6 +20,8 @@ Capp::Capp()
     m_vSide = 0;
     m_mouseMoved = false;
     m_fov = 90;
+    
+    m_FPStextColor = { 255, 255, 255 };
 
     m_previousTimePoint = std::chrono::high_resolution_clock::now();
 
@@ -37,11 +42,12 @@ bool Capp::run()
         update();
         render();
     }
-    std::cout << '\n';
     
     // Destroy components
     SDL_DestroyRenderer(m_renderer);
     SDL_DestroyWindow(m_window);
+    TTF_CloseFont(m_font);
+    TTF_Quit();
     SDL_Quit();
 
     return true;
@@ -82,7 +88,16 @@ bool Capp::initialise()
     // Initialise relative mouse mode
     if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0)
         return false;
-        
+
+    // Initialise font
+    if (TTF_Init() != 0)
+        return false;
+
+    // Open font
+    m_font = TTF_OpenFont("imports/fonts/retro_computer_personal_use.ttf", 64);
+    if (m_font == nullptr)
+        m_font = TTF_OpenFont("../imports/fonts/retro_computer_personal_use.ttf", 64);
+    
     return true;
 }
 
@@ -171,8 +186,15 @@ void Capp::update()
     unsigned long long elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTimePoint - m_previousTimePoint).count();
     m_previousTimePoint = currentTimePoint;
     
-    // Print FPS
-    std::cout << "FPS: " << 1e6 / elapsedTime << '\r';
+    // FPS
+    m_FPSstring = std::string("FPS: ");
+    m_FPSstring.append(std::to_string((int)(1e6 / elapsedTime)));
+    m_FPStextSurface = TTF_RenderText_Solid(m_font, m_FPSstring.c_str(), m_FPStextColor);
+    m_FPStextTexture = SDL_CreateTextureFromSurface(m_renderer, m_FPStextSurface);
+    int textureWidth = 0;
+    int textureHeight = 0;
+    SDL_QueryTexture(m_FPStextTexture, nullptr, nullptr, &textureWidth, &textureHeight);
+    m_FPStextTextureRect = { (int)m_screenWidth - textureWidth, 0, textureWidth, textureHeight };
     
     // Player actions
     m_player.movePlayer(m_mapManager, m_vForward, m_vSide, 1e-6 * elapsedTime);
@@ -211,6 +233,13 @@ void Capp::render()
     m_mapManager.SDL_renderMiniMap(m_renderer, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);
     m_raycaster.SDL_renderRaycast2DMiniMap(m_renderer, m_mapManager, m_player, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);
     m_player.SDL_renderPlayerMiniMap(m_renderer, m_mapManager, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);
+
+    // Render FPS
+    SDL_RenderCopy(m_renderer, m_FPStextTexture, nullptr, &m_FPStextTextureRect);
+
+    // Deallocate FPS's texture & surface
+    SDL_FreeSurface(m_FPStextSurface);
+    SDL_DestroyTexture(m_FPStextTexture);
 
     // Render
     SDL_RenderPresent(m_renderer);

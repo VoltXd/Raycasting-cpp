@@ -19,6 +19,8 @@ Raycaster::Raycaster()
     m_raysColorB = nullptr;
     m_raysLightFactor = nullptr;
     m_raysAngle = nullptr;
+
+    m_movingOffset = 0;
 }
 
 Raycaster::~Raycaster()
@@ -585,7 +587,25 @@ void Raycaster::SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &m
     }
 }
 
-void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth)
+void Raycaster::SDL_renderRaycastBackground(SDL_Renderer *renderer, const double currentVelocity, const double time, const unsigned int screenWidth, const unsigned int screenHeigth)
+{
+    // TODO: optimise using precalculated color array
+    const double maxBrightness = 45;
+    double brightness = maxBrightness; 
+    int j = screenHeigth - 1;
+    m_movingOffset = MOVING_OFFSET_MAGNITUDE * currentVelocity * cos(4 * M_PI * time) / screenHeigth;
+
+    for (unsigned int i = 0; i < screenHeigth/2; i++)
+    {
+        SDL_SetRenderDrawColor(renderer, brightness, brightness, brightness, 255);
+        SDL_RenderDrawLine(renderer, 0, i + m_movingOffset, screenWidth - 1, i + m_movingOffset);
+        SDL_RenderDrawLine(renderer, 0, j + m_movingOffset, screenWidth - 1, j + m_movingOffset);
+        brightness -= maxBrightness * 2 / screenHeigth;  
+        j--;
+    }
+}
+
+void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const double currentVelocity, const double time, const unsigned int screenWidth, const unsigned int screenHeigth)
 {
     const double heigth = 1 * 0.5* screenHeigth;
     double xStep = screenWidth / m_numberOfRays;
@@ -596,24 +616,8 @@ void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const unsigned int scr
         SDL_SetRenderDrawColor(renderer, m_raysColorR[i], m_raysColorG[i], m_raysColorB[i], 255);
         int y = screenHeigth / 2 - heigth / m_raysDistance[i];
         int h = 2 * heigth / m_raysDistance[i];
-        SDL_Rect rectangle = { x, y, (int)xStep, h };
+        SDL_Rect rectangle = { x, y + m_movingOffset, (int)xStep, h };
         SDL_RenderFillRect(renderer, &rectangle);
         x -= xStep;
-    }
-}
-
-void Raycaster::SDL_renderRaycastBackground(SDL_Renderer *renderer, const unsigned int screenWidth, const unsigned int screenHeigth)
-{
-    // TODO: optimise using precalculated color array
-    const double maxBrightness = 45;
-    double brightness = maxBrightness; 
-    int j = screenHeigth - 1;
-    for (unsigned int i = 0; i < screenHeigth/2; i++)
-    {
-        SDL_SetRenderDrawColor(renderer, brightness, brightness, brightness, 255);
-        SDL_RenderDrawLine(renderer, 0, i, screenWidth - 1, i);
-        SDL_RenderDrawLine(renderer, 0, j, screenWidth - 1, j);
-        brightness -= maxBrightness * 2 / screenHeigth;  
-        j--;
     }
 }

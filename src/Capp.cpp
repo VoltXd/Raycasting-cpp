@@ -16,8 +16,8 @@ Capp::Capp()
     m_screenWidth = 1280;
     m_screenHeight = 720;
     m_windowFlags = SDL_WINDOW_SHOWN;
-    m_vForward = 0;
-    m_vSide = 0;
+    m_accelForward = 0;
+    m_accelSide = 0;
     m_mouseMoved = false;
     m_fov = 90;
     
@@ -115,13 +115,13 @@ void Capp::input()
             case SDL_KEYDOWN:
                 // Move
                 if (events.key.keysym.scancode == SDL_SCANCODE_W)
-                    m_vForward = 1;
+                    m_accelForward = 1;
                 else if (events.key.keysym.scancode == SDL_SCANCODE_S)
-                    m_vForward = -1;
+                    m_accelForward = -1;
                 else if (events.key.keysym.scancode == SDL_SCANCODE_D)
-                    m_vSide = 1;
+                    m_accelSide = 1;
                 else if (events.key.keysym.scancode == SDL_SCANCODE_A)
-                    m_vSide = -1;
+                    m_accelSide = -1;
                 else if (events.key.keysym.scancode == SDL_SCANCODE_LEFT)
                     m_angularSpeed = 1;
                 else if (events.key.keysym.scancode == SDL_SCANCODE_RIGHT)
@@ -134,23 +134,23 @@ void Capp::input()
                 // Stop moving
                 if (events.key.keysym.scancode == SDL_SCANCODE_W)
                 {
-                    if (m_vForward > 0)
-                        m_vForward = 0;
+                    if (m_accelForward > 0)
+                        m_accelForward = 0;
                 }
                 else if (events.key.keysym.scancode == SDL_SCANCODE_S)
                 {
-                    if (m_vForward < 0)
-                        m_vForward = 0;
+                    if (m_accelForward < 0)
+                        m_accelForward = 0;
                 }
                 else if (events.key.keysym.scancode == SDL_SCANCODE_D)
                 {
-                    if (m_vSide > 0)
-                        m_vSide = 0;
+                    if (m_accelSide > 0)
+                        m_accelSide = 0;
                 }
                 else if (events.key.keysym.scancode == SDL_SCANCODE_A)
                 {
-                    if (m_vSide < 0)
-                        m_vSide = 0;
+                    if (m_accelSide < 0)
+                        m_accelSide = 0;
                 }
                 else if (events.key.keysym.scancode == SDL_SCANCODE_LEFT)
                 {
@@ -197,7 +197,7 @@ void Capp::update()
     m_FPStextTextureRect = { 0, (int)m_screenHeight - textureHeight, textureWidth, textureHeight };
     
     // Player actions
-    m_player.movePlayer(m_mapManager, m_vForward, m_vSide, 1e-6 * elapsedTime);
+    m_player.movePlayer(m_mapManager, m_accelForward, m_accelSide, 1e-6 * elapsedTime);
     m_player.rotatePlayer(m_angularSpeed, 1e-6 * elapsedTime);
 
     // Player vision
@@ -226,8 +226,8 @@ void Capp::render()
     // Render sky & ground (TODO)
 
     // Render walls
-    m_raycaster.SDL_renderRaycastBackground(m_renderer, m_screenWidth, m_screenHeight);
-    m_raycaster.SDL_renderRaycast(m_renderer, m_screenWidth, m_screenHeight);
+    m_raycaster.SDL_renderRaycastBackground(m_renderer, m_player.getVelocity(), m_previousTimePoint.time_since_epoch().count() * 1e-6, m_screenWidth, m_screenHeight);
+    m_raycaster.SDL_renderRaycast(m_renderer, m_player.getVelocity(), m_previousTimePoint.time_since_epoch().count() * 1e-6, m_screenWidth, m_screenHeight);
 
     // Render Minimap
     m_mapManager.SDL_renderMiniMap(m_renderer, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);

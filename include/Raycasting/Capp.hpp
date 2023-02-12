@@ -40,8 +40,8 @@ class Capp
     MapManager m_mapManager;
     Player m_player;
     Raycaster m_raycaster;
-    double m_vForward;
-    double m_vSide;
+    double m_accelForward;
+    double m_accelSide;
     double m_angularSpeed;
     bool m_mouseMoved;
     unsigned int m_fov;

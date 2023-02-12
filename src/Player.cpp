@@ -11,8 +11,9 @@
 void Player::initialisePlayer(MapManager &mapManager)
 {
     m_angle = 0;
-    m_moveSpeed = 4;
     m_rotationSpeed = 180.0 * Math::DEGREE_TO_RADIAN;
+    m_vx = 0;
+    m_vy = 0;
 
     auto timePoint = std::chrono::high_resolution_clock::now();
     unsigned long long seed = timePoint.time_since_epoch().count();
@@ -33,16 +34,21 @@ void Player::initialisePlayer(MapManager &mapManager)
     m_yPosition = yStart + 0.5;
 }
 
-void Player::movePlayer(MapManager &mapManager, double vForward, double vSide, double dt)
+// TODO: sprint
+void Player::movePlayer(MapManager &mapManager, double accelForward, double accelSide, double dt)
 {
-    double vInverseMagnitude = 1.0 / sqrt(vForward * vForward + vSide * vSide); 
-    if (std::isinf(vInverseMagnitude))
-        vInverseMagnitude = 0;
-    vForward *= vInverseMagnitude;
-    vSide *= vInverseMagnitude;
+    m_vx += ACCELERATION * (accelForward * cos(m_angle) + accelSide * sin(m_angle)) * dt;
+    m_vy += ACCELERATION * (accelForward * sin(-m_angle) + accelSide * cos(m_angle)) * dt;
 
-    double nextX = m_xPosition + m_moveSpeed * (vForward * cos(m_angle) + vSide * sin(m_angle)) * dt;
-    double nextY = m_yPosition + m_moveSpeed * (vForward * sin(-m_angle) + vSide * cos(m_angle)) * dt;
+    m_vMagnitude = sqrt(m_vx * m_vx + m_vy * m_vy); 
+    if (m_vMagnitude >= MOVE_SPEED)
+    {
+        m_vx *= MOVE_SPEED / m_vMagnitude;
+        m_vy *= MOVE_SPEED / m_vMagnitude;        
+    }
+
+    double nextX = m_xPosition + m_vx * dt;
+    double nextY = m_yPosition + m_vy * dt;
 
     // Wall collision management
     double halfPlayerSize = PLAYER_SIZE * 0.5;
@@ -56,6 +62,14 @@ void Player::movePlayer(MapManager &mapManager, double vForward, double vSide, d
 
     m_xPosition = nextX;
     m_yPosition = nextY;
+
+    // Linear drag
+    m_vx -= LINEAR_DRAG * m_vx * dt;
+    m_vy -= LINEAR_DRAG * m_vy * dt;
+    if (abs(m_vx) < 1e-3)
+        m_vx = 0;
+    if (abs(m_vy) < 1e-3)
+        m_vy = 0;
 }
 
 int Player::SDL_renderPlayer(SDL_Renderer *renderer, MapManager &mapManager, const unsigned int screenWidth, const unsigned int screenHeight)

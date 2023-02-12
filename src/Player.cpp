@@ -45,11 +45,12 @@ void Player::movePlayer(MapManager &mapManager, double vForward, double vSide, d
     double nextY = m_yPosition + m_moveSpeed * (vForward * sin(-m_angle) + vSide * cos(m_angle)) * dt;
 
     // Wall collision management
-    if ((int)(nextX - m_playerSize / 2) != (int)m_xPosition || (int)(nextX + m_playerSize / 2) != (int)m_xPosition)
-        if (mapManager.getMapElement((unsigned int)nextX, (unsigned int)m_yPosition) != 0)
+    double halfPlayerSize = PLAYER_SIZE * 0.5;
+    if ((int)(nextX - halfPlayerSize) != (int)m_xPosition || (int)(nextX + halfPlayerSize) != (int)m_xPosition)
+        if (mapManager.getMapElement((unsigned int)(nextX), (unsigned int)m_yPosition) != 0)
             nextX = (nextX -  m_xPosition > 0) ? (int)nextX - 0.001 : (int)m_xPosition;
         
-    if ((int)(nextY - m_playerSize / 2) != (int)m_yPosition || (int)(nextY + m_playerSize / 2) != (int)m_yPosition)
+    if ((int)(nextY - halfPlayerSize) != (int)m_yPosition || (int)(nextY + halfPlayerSize) != (int)m_yPosition)
         if (mapManager.getMapElement((unsigned int)m_xPosition, (unsigned int)nextY) != 0)
             nextY = (nextY -  m_yPosition > 0) ? (int)nextY - 0.001 : (int)m_yPosition;
 
@@ -60,10 +61,10 @@ void Player::movePlayer(MapManager &mapManager, double vForward, double vSide, d
 int Player::SDL_renderPlayer(SDL_Renderer *renderer, MapManager &mapManager, const unsigned int screenWidth, const unsigned int screenHeight)
 {
     // Render Player
-    int w = m_playerSize * screenWidth / mapManager.getWidth();
-    int h = m_playerSize * screenHeight / mapManager.getHeight();
-    int x = (int)((m_xPosition - m_playerSize / 2) * screenWidth / mapManager.getWidth());
-    int y = (int)((m_yPosition - m_playerSize / 2) * screenHeight / mapManager.getHeight());
+    int w = PLAYER_SIZE * screenWidth / mapManager.getWidth();
+    int h = PLAYER_SIZE * screenHeight / mapManager.getHeight();
+    int x = (int)((m_xPosition - PLAYER_SIZE / 2) * screenWidth / mapManager.getWidth());
+    int y = (int)((m_yPosition - PLAYER_SIZE / 2) * screenHeight / mapManager.getHeight());
     SDL_Rect playerRect = { x, y, w, h };
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -85,10 +86,10 @@ int Player::SDL_renderPlayerMiniMap(SDL_Renderer *renderer, MapManager &mapManag
 {
     // Render Player
     int playerSize = std::min<unsigned int>(screenWidth, screenHeight) / std::max<unsigned int>(mapManager.getWidth(), mapManager.getHeight()) / scaleFactor;
-    int w = m_playerSize * playerSize;
-    int h = m_playerSize * playerSize;
-    int x = (m_xPosition - m_playerSize / 2) *  playerSize;
-    int y = (m_yPosition - m_playerSize / 2) *  playerSize;
+    int w = PLAYER_SIZE * playerSize;
+    int h = PLAYER_SIZE * playerSize;
+    int x = (m_xPosition - PLAYER_SIZE / 2) *  playerSize;
+    int y = (m_yPosition - PLAYER_SIZE / 2) *  playerSize;
     SDL_Rect playerRect = { x, y, w, h };
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 128);

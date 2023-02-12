@@ -36,6 +36,7 @@ class Capp
     double m_vSide;
     double m_angularSpeed;
     bool m_mouseMoved;
+    unsigned int m_fov;
 
     //const unsigned int DELTA_TIME_MILLISECONDS = 5;
     const unsigned char MINIMAP_SCALE_FACTOR = 4;

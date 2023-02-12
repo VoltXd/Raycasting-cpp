@@ -2,6 +2,7 @@
 
 #include "Capp.hpp"
 #include "SDL.h"
+#include "Toolbox.hpp"
 
 // TODO: config.cfg
 
@@ -15,6 +16,7 @@ Capp::Capp()
     m_vForward = 0;
     m_vSide = 0;
     m_mouseMoved = false;
+    m_fov = 90;
 
     m_previousTimePoint = std::chrono::high_resolution_clock::now();
 
@@ -152,6 +154,10 @@ void Capp::input()
                 m_angularSpeed = -events.motion.xrel;
                 break;
 
+            case SDL_MOUSEWHEEL:
+                m_fov = Math::limitToInterval<unsigned int>(m_fov + events.wheel.y, 60, 120);
+                break;
+
             default:
                 break;
         }
@@ -173,7 +179,7 @@ void Capp::update()
     m_player.rotatePlayer(m_angularSpeed, 1e-6 * elapsedTime);
 
     // Player vision
-    m_raycaster.calculateRaysDistance_OMP(m_player, m_mapManager);
+    m_raycaster.calculateRaysDistance_OMP(m_player, m_mapManager, m_fov);
 
     // Reset rotation if mouse moved
     if (m_mouseMoved)

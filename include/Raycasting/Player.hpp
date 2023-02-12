@@ -23,5 +23,5 @@ class Player
     double m_xPosition;
     double m_yPosition;
     double m_angle;
-    const double m_playerSize = 0.5;
+    const double PLAYER_SIZE = 1;
 };

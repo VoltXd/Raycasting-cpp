@@ -13,6 +13,7 @@ class Raycaster
 
     void initialiseRaycaster(const unsigned int numberOfRays);
     void calculateRaysDistance(Player &player, MapManager &mapManager, unsigned int fov = 90);
+    void calculateRaysDistance_fishEyeAndRayDistributionCorrected(Player &player, MapManager &mapManager, unsigned int fov = 90);
     void calculateRaysDistance_OMP(Player &player, MapManager &mapManager, unsigned int fov = 90);
     void SDL_renderRaycast2DMap(SDL_Renderer *renderer, MapManager &mapManager, Player &player, const unsigned int screenWidth, const unsigned int screenHeigth);
     void SDL_renderRaycast2DMiniMap(SDL_Renderer *renderer, MapManager &mapManager, Player &player, const unsigned int screenWidth, const unsigned int screenHeigth, const unsigned int scaleFactor);

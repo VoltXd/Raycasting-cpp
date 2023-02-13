@@ -8,6 +8,7 @@
 
 // TODO: config.cfg
 // TODO: ImGui
+// TODO: RenderLines, RenderRects
 
 Capp::Capp()
 {
@@ -77,7 +78,7 @@ bool Capp::initialise()
         return false;
 
     // Initialise Renderer
-    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
+    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
     if (m_renderer == nullptr)
         return false;
 

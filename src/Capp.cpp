@@ -227,8 +227,8 @@ void Capp::render()
     // Render sky & ground (TODO)
 
     // Render walls
-    m_raycaster.SDL_renderRaycastBackground(m_renderer, m_player.getVelocity(), m_previousTimePoint.time_since_epoch().count() * 1e-6, m_screenWidth, m_screenHeight);
-    m_raycaster.SDL_renderRaycast(m_renderer, m_player.getVelocity(), m_previousTimePoint.time_since_epoch().count() * 1e-6, m_screenWidth, m_screenHeight);
+    m_raycaster.SDL_renderRaycastBackground(m_renderer, m_player.getVelocity(), std::chrono::duration_cast<std::chrono::microseconds>(m_previousTimePoint.time_since_epoch()).count() * 1e-6, m_screenWidth, m_screenHeight);
+    m_raycaster.SDL_renderRaycast(m_renderer, m_player.getVelocity(), std::chrono::duration_cast<std::chrono::microseconds>(m_previousTimePoint.time_since_epoch()).count() * 1e-6, m_screenWidth, m_screenHeight);
 
     // Render Minimap
     m_mapManager.SDL_renderMiniMap(m_renderer, m_screenWidth, m_screenHeight, MINIMAP_SCALE_FACTOR);

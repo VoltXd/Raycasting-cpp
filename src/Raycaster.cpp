@@ -19,6 +19,21 @@ Raycaster::Raycaster()
     m_raysColorB = nullptr;
     m_raysLightFactor = nullptr;
     m_raysAngle = nullptr;
+    m_wallHeight = nullptr;
+    m_raysTextureXIndex = nullptr;
+    m_raysTextureYStep = nullptr;
+    m_raysIsTextured = nullptr;
+
+    m_texture.resize(TEXTURE_SIZE * TEXTURE_SIZE);
+    unsigned char xorColor;
+    for (int i = 0; i < TEXTURE_SIZE; i++)
+    {
+        for (int j = 0; j < TEXTURE_SIZE; j++)
+        {
+            xorColor = (255 * i / TEXTURE_SIZE) ^ (255 * j / TEXTURE_SIZE);
+            m_texture.at(i + j * TEXTURE_SIZE) = SDL_Color { 0, xorColor, 0, 255 };
+        }
+    }
 
     m_movingOffset = 0;
 }
@@ -48,6 +63,18 @@ Raycaster::~Raycaster()
 
     if (m_raysAngle != nullptr)
         delete[] m_raysAngle;
+
+    if (m_wallHeight != nullptr)
+        delete[] m_wallHeight;
+
+    if (m_raysTextureXIndex != nullptr)
+        delete[] m_raysTextureXIndex;
+
+    if (m_raysTextureYStep != nullptr)
+        delete[] m_raysTextureYStep;
+
+    if (m_raysIsTextured != nullptr)
+        delete[] m_raysIsTextured;
 }
 
 void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
@@ -61,12 +88,17 @@ void Raycaster::initialiseRaycaster(const unsigned int numberOfRays)
     m_raysColorB = new unsigned char[m_numberOfRays];
     m_raysLightFactor = new double[m_numberOfRays];
     m_raysAngle = new double[m_numberOfRays];
+    m_wallHeight = new double[m_numberOfRays];
+    m_raysTextureXIndex = new int[m_numberOfRays];
+    m_raysTextureYStep = new double[m_numberOfRays];
+    m_raysIsTextured = new bool[m_numberOfRays];
 }
 
 void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, unsigned int fov)
 {
     const double angleStep = (double)fov * Math::DEGREE_TO_RADIAN / m_numberOfRays;
     const double renderDistance = 128;
+    const double heigth = 1 * 0.5;
 
     // Compute angle array
     m_raysAngle[0] = player.getAngle() - (double)fov * Math::DEGREE_TO_RADIAN * 0.5; 
@@ -96,6 +128,8 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
 
     double rayDistanceUncorrected;
 
+    WallSide sideHit;
+
     for (unsigned int i = 0; i < m_numberOfRays; i++)
     {
         // Get current angle
@@ -128,9 +162,15 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
                 rayPositionY += currentPointToNextXaxisEdge_Y;
 
                 if (rayDirectionX > 0)
+                {
                     nextEdgeXaxis++;
+                    sideHit = WallSide::west;
+                }
                 else
+                {
                     nextEdgeXaxis--;
+                    sideHit = WallSide::east;
+                }
             }
             else
             {
@@ -139,9 +179,15 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
                 rayPositionY += currentPointToNextYaxisEdge_Y;
 
                 if (rayDirectionY > 0)
+                {
                     nextEdgeYaxis++;
+                    sideHit = WallSide::south;
+                }
                 else
+                {
                     nextEdgeYaxis--;
+                    sideHit = WallSide::north;
+                }
             }
 
             rayPositionX += 1e-6 * rayDirectionX;
@@ -160,7 +206,9 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
 
                 rayDistanceUncorrected = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY); 
                 m_raysDistance[i] = rayDistanceUncorrected;
+                m_wallHeight[i] = 2 * heigth / m_raysDistance[i];            
 
+                m_raysIsTextured[i] = false;
                 if (blockHitIndex == 1)
                 {
                     // White block
@@ -189,6 +237,24 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
                     m_raysColorG[i] = 0;
                     m_raysColorB[i] = 255;
                 }
+                else if (blockHitIndex == 5)
+                {
+                    // Texture block
+                    m_raysIsTextured[i] = true;
+                    
+                    // Calculation of texture X index
+                    if (sideHit == WallSide::south)
+                        m_raysTextureXIndex[i] = (rayPositionX - (int)(rayPositionX)) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::north)
+                        m_raysTextureXIndex[i] = (1 - (rayPositionX - (int)(rayPositionX))) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::east)
+                        m_raysTextureXIndex[i] = (rayPositionY - (int)(rayPositionY)) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::west)
+                        m_raysTextureXIndex[i] = (1 - (rayPositionY - (int)(rayPositionY))) * TEXTURE_SIZE;
+
+                    // Calculation of Y Step 
+                    m_raysTextureYStep[i] = m_wallHeight[i] / TEXTURE_SIZE;
+                }
                 else 
                 {
                     // DEFAULT BLACK BLOCK
@@ -209,7 +275,9 @@ void Raycaster::calculateRaysDistance(Player &player, MapManager &mapManager, un
         {
             m_raysDistance[i] = std::numeric_limits<double>::infinity();
             m_raysX[i] = std::numeric_limits<double>::infinity();
-            m_raysY[i] = std::numeric_limits<double>::infinity();            
+            m_raysY[i] = std::numeric_limits<double>::infinity();
+
+            m_wallHeight[i] = 0;            
         }
 
         // Setup next Ray
@@ -224,6 +292,7 @@ void Raycaster::calculateRaysDistance_fishEyeAndRayDistributionCorrected(Player 
     const double fovRadian = (double)fov * Math::DEGREE_TO_RADIAN;
     const double angleStep = fovRadian / m_numberOfRays;
     const double inverseLinearRayDistributionFactor = 2.0 / (m_numberOfRays * tan(0.5 * fovRadian));
+    const double heigth = 1 * 0.5;
 
     // Compute angle array
     const int halfNumberOfRays = m_numberOfRays >> 1;
@@ -253,6 +322,8 @@ void Raycaster::calculateRaysDistance_fishEyeAndRayDistributionCorrected(Player 
 
     double rayDistanceUncorrected;
 
+    WallSide sideHit;
+
     for (unsigned int i = 0; i < m_numberOfRays; i++)
     {
         // Get current angle
@@ -285,9 +356,15 @@ void Raycaster::calculateRaysDistance_fishEyeAndRayDistributionCorrected(Player 
                 rayPositionY += currentPointToNextXaxisEdge_Y;
 
                 if (rayDirectionX > 0)
+                {
                     nextEdgeXaxis++;
+                    sideHit = WallSide::west;
+                }
                 else
+                {
                     nextEdgeXaxis--;
+                    sideHit = WallSide::east;
+                }
             }
             else
             {
@@ -296,9 +373,15 @@ void Raycaster::calculateRaysDistance_fishEyeAndRayDistributionCorrected(Player 
                 rayPositionY += currentPointToNextYaxisEdge_Y;
 
                 if (rayDirectionY > 0)
+                {
                     nextEdgeYaxis++;
+                    sideHit = WallSide::south;
+                }
                 else
+                {
                     nextEdgeYaxis--;
+                    sideHit = WallSide::north;
+                }
             }
 
             rayPositionX += 1e-6 * rayDirectionX;
@@ -317,6 +400,7 @@ void Raycaster::calculateRaysDistance_fishEyeAndRayDistributionCorrected(Player 
 
                 rayDistanceUncorrected = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY); 
                 m_raysDistance[i] = rayDistanceUncorrected * cos(currentAngle - player.getAngle());
+                m_wallHeight[i] = 2 * heigth / m_raysDistance[i];            
 
                 if (blockHitIndex == 1)
                 {
@@ -346,6 +430,24 @@ void Raycaster::calculateRaysDistance_fishEyeAndRayDistributionCorrected(Player 
                     m_raysColorG[i] = 0;
                     m_raysColorB[i] = 255;
                 }
+                else if (blockHitIndex == 5)
+                {
+                    // Texture block
+                    m_raysIsTextured[i] = true;
+                    
+                    // Calculation of texture X index
+                    if (sideHit == WallSide::south)
+                        m_raysTextureXIndex[i] = (rayPositionX - (int)(rayPositionX)) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::north)
+                        m_raysTextureXIndex[i] = (1 - (rayPositionX - (int)(rayPositionX))) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::east)
+                        m_raysTextureXIndex[i] = (rayPositionY - (int)(rayPositionY)) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::west)
+                        m_raysTextureXIndex[i] = (1 - (rayPositionY - (int)(rayPositionY))) * TEXTURE_SIZE;
+
+                    // Calculation of Y Step 
+                    m_raysTextureYStep[i] = m_wallHeight[i] / TEXTURE_SIZE;
+                }
                 else 
                 {
                     // DEFAULT BLACK BLOCK
@@ -366,7 +468,9 @@ void Raycaster::calculateRaysDistance_fishEyeAndRayDistributionCorrected(Player 
         {
             m_raysDistance[i] = std::numeric_limits<double>::infinity();
             m_raysX[i] = std::numeric_limits<double>::infinity();
-            m_raysY[i] = std::numeric_limits<double>::infinity();            
+            m_raysY[i] = std::numeric_limits<double>::infinity();   
+
+            m_wallHeight[i] = 0;            
         }
 
         // Setup next Ray
@@ -381,6 +485,7 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
     const double fovRadian = (double)fov * Math::DEGREE_TO_RADIAN;
     const double angleStep = fovRadian / m_numberOfRays;
     const double inverseLinearRayDistributionFactor = 2.0 / (m_numberOfRays * tan(0.5 * fovRadian));
+    const double heigth = 1 * 0.5;
 
     // Compute angle array
     const int halfNumberOfRays = m_numberOfRays >> 1;
@@ -410,6 +515,8 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
     double playerToRayY;
 
     double rayDistanceUncorrected;
+
+    WallSide sideHit;
 
 #pragma omp parallel for firstprivate(isNextRayDistanceFound) private(currentAngle, rayPositionX, rayPositionY, rayDirectionX, rayDirectionY, nextEdgeXaxis, nextEdgeYaxis, currentPointToNextXaxisEdge_X, currentPointToNextXaxisEdge_Y, currentPointToNextYaxisEdge_Y, currentPointToNextYaxisEdge_X, blockHitIndex, playerToRayX, playerToRayY, rayDistanceUncorrected)
     for (unsigned int i = 0; i < m_numberOfRays; i++)
@@ -444,9 +551,15 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
                 rayPositionY += currentPointToNextXaxisEdge_Y;
 
                 if (rayDirectionX > 0)
+                {
                     nextEdgeXaxis++;
+                    sideHit = WallSide::west;
+                }
                 else
+                {
                     nextEdgeXaxis--;
+                    sideHit = WallSide::east;
+                }
             }
             else
             {
@@ -455,9 +568,15 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
                 rayPositionY += currentPointToNextYaxisEdge_Y;
 
                 if (rayDirectionY > 0)
+                {
                     nextEdgeYaxis++;
+                    sideHit = WallSide::south;
+                }
                 else
+                {
                     nextEdgeYaxis--;
+                    sideHit = WallSide::north;
+                }
             }
 
             rayPositionX += 1e-6 * rayDirectionX;
@@ -476,7 +595,9 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
 
                 rayDistanceUncorrected = sqrt(playerToRayX * playerToRayX + playerToRayY * playerToRayY); 
                 m_raysDistance[i] = rayDistanceUncorrected * cos(currentAngle - player.getAngle());
+                m_wallHeight[i] = 2 * heigth / m_raysDistance[i];            
 
+                m_raysIsTextured[i] = false;
                 if (blockHitIndex == 1)
                 {
                     // White block
@@ -505,6 +626,29 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
                     m_raysColorG[i] = 0;
                     m_raysColorB[i] = 255;
                 }
+                else if (blockHitIndex == 5)
+                {
+                    // Texture block
+                    m_raysIsTextured[i] = true;
+                    
+                    // Calculation of texture X index
+                    if (sideHit == WallSide::south)
+                        m_raysTextureXIndex[i] = (rayPositionX - (int)(rayPositionX)) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::north)
+                        m_raysTextureXIndex[i] = (1 - (rayPositionX - (int)(rayPositionX))) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::east)
+                        m_raysTextureXIndex[i] = (rayPositionY - (int)(rayPositionY)) * TEXTURE_SIZE;
+                    else if (sideHit == WallSide::west)
+                        m_raysTextureXIndex[i] = (1 - (rayPositionY - (int)(rayPositionY))) * TEXTURE_SIZE;
+
+                    // Calculation of Y Step 
+                    m_raysTextureYStep[i] = m_wallHeight[i] / TEXTURE_SIZE;
+
+                    // Lightning
+                    m_raysColorR[i] = 255;
+                    m_raysColorG[i] = 255;
+                    m_raysColorB[i] = 255;
+                }
                 else 
                 {
                     // DEFAULT BLACK BLOCK
@@ -525,7 +669,9 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
         {
             m_raysDistance[i] = std::numeric_limits<double>::infinity();
             m_raysX[i] = std::numeric_limits<double>::infinity();
-            m_raysY[i] = std::numeric_limits<double>::infinity();            
+            m_raysY[i] = std::numeric_limits<double>::infinity(); 
+
+            m_wallHeight[i] = 0;            
         }
 
         // Setup next Ray
@@ -607,17 +753,37 @@ void Raycaster::SDL_renderRaycastBackground(SDL_Renderer *renderer, const double
 
 void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const double currentVelocity, const double time, const unsigned int screenWidth, const unsigned int screenHeigth)
 {
-    const double heigth = 1 * 0.5* screenHeigth;
     double xStep = screenWidth / m_numberOfRays;
     int x = (m_numberOfRays - 1) * xStep;
     
     for(unsigned int i = 0; i < m_numberOfRays; i++)
     {
-        SDL_SetRenderDrawColor(renderer, m_raysColorR[i], m_raysColorG[i], m_raysColorB[i], 255);
-        int y = screenHeigth / 2 - heigth / m_raysDistance[i];
-        int h = 2 * heigth / m_raysDistance[i];
-        SDL_Rect rectangle = { x, y + m_movingOffset, (int)xStep, h };
-        SDL_RenderFillRect(renderer, &rectangle);
+        SDL_Rect rectangle;
+        if (m_raysIsTextured[i])
+        {
+            unsigned char r, g, b, a;
+            double yStep = m_raysTextureYStep[i] * screenHeigth;
+            double y = (screenHeigth - m_wallHeight[i] * screenHeigth) / 2;
+            for (unsigned int j = 0; j < TEXTURE_SIZE; j++)
+            {
+                r = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE).r * (double)m_raysColorR[i] / 255;
+                g = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE).g * (double)m_raysColorG[i] / 255;
+                b = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE).b * (double)m_raysColorB[i] / 255;
+                a = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE).a;
+                SDL_SetRenderDrawColor(renderer, r, g, b, a);
+                rectangle = { x, (int)(y + m_movingOffset), (int)xStep, (int)yStep + 1 };
+                SDL_RenderFillRect(renderer, &rectangle);
+                y += yStep;
+            }
+        }
+        else
+        {
+            SDL_SetRenderDrawColor(renderer, m_raysColorR[i], m_raysColorG[i], m_raysColorB[i], 255);
+            int h = m_wallHeight[i] * screenHeigth;
+            int y = (screenHeigth - m_wallHeight[i] * screenHeigth) / 2;
+            rectangle = { x, (int)(y + m_movingOffset), (int)xStep, h };
+            SDL_RenderFillRect(renderer, &rectangle);
+        }
         x -= xStep;
     }
 }

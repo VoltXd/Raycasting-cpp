@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "MapManager.hpp"
 #include "Player.hpp"
 #include "SDL.h"
@@ -22,6 +24,7 @@ class Raycaster
     
 
     private:
+    std::vector<SDL_Color> m_texture;
     unsigned int m_numberOfRays;
     double *m_raysDistance;
     double *m_raysX;
@@ -31,6 +34,20 @@ class Raycaster
     unsigned char *m_raysColorB;
     double *m_raysLightFactor;
     double *m_raysAngle;
+    double *m_wallHeight;
+    int *m_raysTextureXIndex;
+    double *m_raysTextureYStep;
+    bool *m_raysIsTextured;
     double m_movingOffset;
+
+    const unsigned char TEXTURE_SIZE = 16;
     const double MOVING_OFFSET_MAGNITUDE = 3000;
+
+    enum class WallSide
+    {
+        north,
+        south,
+        west,
+        east
+    };
 };

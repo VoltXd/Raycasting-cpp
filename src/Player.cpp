@@ -35,16 +35,19 @@ void Player::initialisePlayer(MapManager &mapManager)
 }
 
 // TODO: sprint
-void Player::movePlayer(MapManager &mapManager, double accelForward, double accelSide, double dt)
+void Player::movePlayer(MapManager &mapManager, double accelForward, double accelSide, bool isSprinting, double dt)
 {
-    m_vx += ACCELERATION * (accelForward * cos(m_angle) + accelSide * sin(m_angle)) * dt;
-    m_vy += ACCELERATION * (accelForward * sin(-m_angle) + accelSide * cos(m_angle)) * dt;
+    const double mouvementSpeed = isSprinting ? SPRINT_SPEED : MOVE_SPEED;
+    const double acceleration = isSprinting ? SPRINT_ACCELERATION : ACCELERATION;
+
+    m_vx += acceleration * (accelForward * cos(m_angle) + accelSide * sin(m_angle)) * dt;
+    m_vy += acceleration * (accelForward * sin(-m_angle) + accelSide * cos(m_angle)) * dt;
 
     m_vMagnitude = sqrt(m_vx * m_vx + m_vy * m_vy); 
-    if (m_vMagnitude >= MOVE_SPEED)
+    if (m_vMagnitude >= mouvementSpeed)
     {
-        m_vx *= MOVE_SPEED / m_vMagnitude;
-        m_vy *= MOVE_SPEED / m_vMagnitude;        
+        m_vx *= mouvementSpeed / m_vMagnitude;
+        m_vy *= mouvementSpeed / m_vMagnitude;        
     }
 
     double nextX = m_xPosition + m_vx * dt;

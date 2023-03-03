@@ -40,7 +40,7 @@ class Raycaster
     bool *m_raysIsTextured;
     double m_movingOffset;
 
-    const unsigned char TEXTURE_SIZE = 16;
+    const unsigned char TEXTURE_SIZE = 32;
     const double MOVING_OFFSET_MAGNITUDE = 3000;
 
     enum class WallSide

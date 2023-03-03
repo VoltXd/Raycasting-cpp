@@ -26,12 +26,16 @@ Raycaster::Raycaster()
 
     m_texture.resize(TEXTURE_SIZE * TEXTURE_SIZE);
     unsigned char xorColor;
+    unsigned char ycolor;
+    unsigned char xycolor;
     for (int i = 0; i < TEXTURE_SIZE; i++)
     {
         for (int j = 0; j < TEXTURE_SIZE; j++)
         {
+            xycolor = j * 128 / TEXTURE_SIZE + i * 128 / TEXTURE_SIZE;
             xorColor = (255 * i / TEXTURE_SIZE) ^ (255 * j / TEXTURE_SIZE);
-            m_texture.at(i + j * TEXTURE_SIZE) = SDL_Color { 0, xorColor, 0, 255 };
+            ycolor = j * 255 / TEXTURE_SIZE;
+            m_texture.at(i + j * TEXTURE_SIZE) = SDL_Color { xorColor, xorColor, xorColor, 255 };
         }
     }
 
@@ -483,7 +487,6 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
 {
     const double renderDistance = 128;
     const double fovRadian = (double)fov * Math::DEGREE_TO_RADIAN;
-    const double angleStep = fovRadian / m_numberOfRays;
     const double inverseLinearRayDistributionFactor = 2.0 / (m_numberOfRays * tan(0.5 * fovRadian));
     const double heigth = 1 * 0.5;
 
@@ -675,7 +678,6 @@ void Raycaster::calculateRaysDistance_OMP(Player &player, MapManager &mapManager
         }
 
         // Setup next Ray
-        currentAngle += angleStep;
         isNextRayDistanceFound = false;
     }
 }
@@ -764,16 +766,26 @@ void Raycaster::SDL_renderRaycast(SDL_Renderer *renderer, const double currentVe
             unsigned char r, g, b, a;
             double yStep = m_raysTextureYStep[i] * screenHeigth;
             double y = (screenHeigth - m_wallHeight[i] * screenHeigth) / 2;
+            double nextY;
+            SDL_Color color;
+            // #pragma omp parallel for private(color, )
             for (unsigned int j = 0; j < TEXTURE_SIZE; j++)
             {
-                r = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE).r * (double)m_raysColorR[i] / 255;
-                g = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE).g * (double)m_raysColorG[i] / 255;
-                b = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE).b * (double)m_raysColorB[i] / 255;
-                a = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE).a;
+                nextY = y + yStep;
+                if ((nextY < 0) || ( screenHeigth <= y ))
+                {
+                    y = nextY;
+                    continue;
+                }
+                color = m_texture.at(m_raysTextureXIndex[i] + j * TEXTURE_SIZE);
+                r = color.r * (double)m_raysColorR[i] / 255;
+                g = color.g * (double)m_raysColorG[i] / 255;
+                b = color.b * (double)m_raysColorB[i] / 255;
+                a = color.a;
                 SDL_SetRenderDrawColor(renderer, r, g, b, a);
                 rectangle = { x, (int)(y + m_movingOffset), (int)xStep, (int)yStep + 1 };
                 SDL_RenderFillRect(renderer, &rectangle);
-                y += yStep;
+                y = nextY;
             }
         }
         else

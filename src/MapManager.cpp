@@ -153,6 +153,9 @@ int MapManager::SDL_renderMiniMap(SDL_Renderer *renderer, const unsigned int scr
                 SDL_SetRenderDrawColor(renderer, 0, 255, 0, 128);
             else if (m_mapArray[coordinateToIndex(i, j)] == 4)
                 SDL_SetRenderDrawColor(renderer, 0, 0, 255, 128);
+            else if (m_mapArray[coordinateToIndex(i, j)] == 5)
+                SDL_SetRenderDrawColor(renderer, 0, 128, 0, 128);
+                
 
             SDL_RenderFillRect(renderer, &tile);
             tile.y += miniMapSize;

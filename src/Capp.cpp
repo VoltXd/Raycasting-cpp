@@ -20,6 +20,7 @@ Capp::Capp()
     m_accelForward = 0;
     m_accelSide = 0;
     m_mouseMoved = false;
+    m_isSprinting = false;
     m_fov = 90;
     
     m_FPStextColor = { 255, 255, 255 };
@@ -127,6 +128,8 @@ void Capp::input()
                     m_angularSpeed = 1;
                 else if (events.key.keysym.scancode == SDL_SCANCODE_RIGHT)
                     m_angularSpeed = -1;
+                else if (events.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
+                    m_isSprinting = true;
                 else if (events.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
                     m_isRunning = false;
                 break;
@@ -163,6 +166,8 @@ void Capp::input()
                     if (m_angularSpeed < 0)
                         m_angularSpeed = 0;   
                 }
+                else if (events.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
+                    m_isSprinting = false;
                 break;
 
             case SDL_MOUSEMOTION:
@@ -198,7 +203,7 @@ void Capp::update()
     m_FPStextTextureRect = { 0, (int)m_screenHeight - textureHeight, textureWidth, textureHeight };
     
     // Player actions
-    m_player.movePlayer(m_mapManager, m_accelForward, m_accelSide, 1e-6 * elapsedTime);
+    m_player.movePlayer(m_mapManager, m_accelForward, m_accelSide, m_isSprinting, 1e-6 * elapsedTime);
     m_player.rotatePlayer(m_angularSpeed, 1e-6 * elapsedTime);
 
     // Player vision

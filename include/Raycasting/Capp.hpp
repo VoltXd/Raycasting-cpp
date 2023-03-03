@@ -44,6 +44,7 @@ class Capp
     double m_accelSide;
     double m_angularSpeed;
     bool m_mouseMoved;
+    bool m_isSprinting;
     unsigned int m_fov;
 
     //const unsigned int DELTA_TIME_MILLISECONDS = 5;

@@ -9,7 +9,7 @@ class Player
     Player() = default;
 
     void initialisePlayer(MapManager &mapManager);
-    void movePlayer(MapManager &mapManager, double accelForward, double accelSide, double dt);
+    void movePlayer(MapManager &mapManager, double accelForward, double accelSide, bool isSprinting, double dt);
     inline void rotatePlayer(double angularSpeed, double dt) { m_angle += m_rotationSpeed * angularSpeed * dt; };
     inline double getX() { return m_xPosition; }
     inline double getY() { return m_yPosition; }
@@ -28,6 +28,7 @@ class Player
     double m_vy;
 
     const double ACCELERATION = 20;
+    const double SPRINT_ACCELERATION = 40;
     const double LINEAR_DRAG = 5;
     const double MOVE_SPEED = 5;
     const double SPRINT_SPEED = 10;
